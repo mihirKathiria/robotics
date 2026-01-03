@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatic Streetlight Project - TV Optimized</title>
+    <style>
+        :root {
+            --sky-color: #020617;
+            --sun-opacity: 0;
+            --moon-opacity: 1;
+            --moon-left: 50%;
+            --sun-left: 100%;
+            --ground-light-opacity: 0;
+            --window-color: #334155;
+            --accent-color: #facc15;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            background: #000;
+            display: flex; /* Flexbox to separate main area and sidebar */
+            color: white;
+        }
+
+        /* Project Title Header */
+        #project-header {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            z-index: 10;
+        }
+
+        #project-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-color);
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        }
+
+        #project-header p {
+            margin: 8px 0 0 0;
+            font-size: 1rem;
+            opacity: 0.9;
+            letter-spacing: 1px;
+        }
+
+        /* Simulation Canvas (Left Main Area) */
+        #sky {
+            position: relative;
+            height: 100vh;
+            flex: 1; /* Takes up all space except the control panel */
+            background-color: var(--sky-color);
+            transition: background-color 0.7s ease;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .label {
+            position: absolute;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Celestial Bodies */
+        .celestial {
+            position: absolute;
+            top: 15%;
+            transform: translateX(-50%);
+            transition: all 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #moon { left: var(--moon-left); opacity: var(--moon-opacity); filter: drop-shadow(0 0 20px white); }
+        #sun { left: var(--sun-left); opacity: var(--sun-opacity); filter: drop-shadow(0 0 40px var(--accent-color)); }
+
+        #sun svg { animation: spin 15s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Ground Layer */
+        #ground {
+            position: relative;
+            width: 100%;
+            height: 35vh;
+            overflow: hidden;
+        }
+
+        .hill {
+            position: absolute;
+            bottom: 0;
+            width: 140%;
+            border-radius: 100% 100% 0 0;
+        }
+
+        .hill-1 { height: 100%; background-color: #064e3b; left: -20%; transform: translateY(40%); }
+        .hill-2 { height: 80%; background-color: #065f46; left: -10%; transform: translateY(30%); }
+
+        /* House & Hardware Components */
+        #house-container {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #glow {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250px;
+            height: 250px;
+            background: rgba(254, 240, 138, 0.4);
+            filter: blur(60px);
+            border-radius: 50%;
+            opacity: var(--ground-light-opacity);
+            transition: opacity 0.5s;
+        }
+
+        .house-body {
+            width: 120px;
+            height: 90px;
+            background: #e7e5e4;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .roof {
+            width: 0;
+            height: 0;
+            border-left: 70px solid transparent;
+            border-right: 70px solid transparent;
+            border-bottom: 60px solid #78350f;
+        }
+
+        .window {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #a8a29e;
+            background-color: var(--window-color);
+            transition: background-color 0.5s;
+        }
+
+        /* Updated Streetlight Design */
+        .lamp-post {
+            position: absolute;
+            left: -100px;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pole { 
+            width: 8px; 
+            height: 100px; 
+            background: #1f2937; 
+        }
+        
+        .bulb {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #374151;
+            border: 3px solid #111827;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .bulb.on {
+            background: var(--accent-color);
+            box-shadow: 0 0 50px var(--accent-color);
+            border-color: #fef08a;
+        }
+
+        /* LDR Sensor */
+        .ldr-sensor {
+            position: absolute;
+            right: -100px;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ldr-head {
+            width: 24px;
+            height: 12px;
+            background: #dc2626; 
+            border: 2px solid #7f1d1d;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .ldr-head::after {
+            content: "~~~~";
+            font-size: 10px;
+            color: #fee2e2;
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            font-weight: bold;
+        }
+
+        .ldr-wires {
+            width: 18px;
+            height: 30px;
+            border-left: 3px solid #6b7280;
+            border-right: 3px solid #6b7280;
+        }
+
+        .status-badge {
+            margin-top: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 2px solid rgba(255,255,255,0.2);
+            white-space: nowrap;
+        }
+
+        /* Control Panel Sidebar (RIGHT SIDE) */
+        #controls {
+            width: 350px;
+            min-width: 350px;
+            background: #0f172a;
+            border-left: 4px solid var(--accent-color);
+            padding: 40px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 45px;
+            z-index: 1000;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7);
+            overflow-y: auto;
+        }
+
+        .slider-group { width: 100%; }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #94a3b8;
+        }
+
+        .value-display {
+            font-family: monospace;
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 12px;
+            background: #334155;
+            border-radius: 10px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 32px;
+            height: 32px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.6);
+        }
+
+        .logic-view {
+            color: #4ade80;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.25rem;
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #334155;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        #info-panel {
+            margin-top: auto;
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #info-panel h3 { margin: 0 0 12px 0; color: var(--accent-color); font-size: 1.1rem; }
+        #info-panel ul { padding-left: 20px; margin: 0; }
+        #info-panel li { margin-bottom: 8px; }
+
+        @media (max-width: 1024px) {
+            body { flex-direction: column; }
+            #controls { 
+                width: 100%; 
+                min-width: 0; 
+                height: auto; 
+                border-left: none; 
+                border-top: 4px solid var(--accent-color); 
+                padding: 30px;
+            }
+            #sky { height: 50vh; }
+            #info-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sky">
+        <div id="project-header">
+            <h1>Automatic Streetlight</h1>
+            <p>Robotics & Coding Project Simulation</p>
+        </div>
+
+        <div id="moon" class="celestial">
+            <span class="label">Moon</span>
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="#e2e8f0">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </div>
+
+        <div id="sun" class="celestial">
+            <span class="label">Sun</span>
+            <svg width="100" height="100" viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" stroke-width="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+        </div>
+
+        <div id="ground">
+            <div class="hill hill-1"></div>
+            <div class="hill hill-2"></div>
+            
+            <div id="house-container">
+                <div id="glow"></div>
+                <div class="house-structure">
+                    <div class="roof"></div>
+                    <div class="house-body">
+                        <div class="window" id="window"></div>
+                    </div>
+                </div>
+
+                <!-- Updated Lamp Post -->
+                <div class="lamp-post">
+                    <span class="label" style="bottom: 150px;">Streetlight (Output)</span>
+                    <div class="pole"></div>
+                    <div class="bulb" id="lamp-bulb">
+                        <!-- New SVG Design -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .5 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+                            <line x1="9" y1="18" x2="15" y2="18"></line>
+                            <line x1="10" y1="22" x2="14" y2="22"></line>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="ldr-sensor">
+                    <span class="label" style="bottom: 60px; background: #b91c1c;">LDR Sensor (Input)</span>
+                    <div class="ldr-head"></div>
+                    <div class="ldr-wires"></div>
+                </div>
+
+                <div class="status-badge" id="light-status">System: Waiting...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <h2 style="color:var(--accent-color); font-size: 1.2rem; margin:0; text-transform: uppercase; letter-spacing: 2px;">Control Panel</h2>
+        
+        <div class="slider-group">
+            <div class="slider-header">
+                <span>Input: LDR Level</span>
+                <span class="value-display" id="sun-val">0</span>
+            </div>
+            <input type="range" id="sun-slider" min="0" max="1023" value="0">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-header">
+                <span>Code: Threshold</span>
+                <span class="value-display" id="up-val">500</span>
+            </div>
+            <input type="range" id="up-slider" min="0" max="1023" value="500">
+        </div>
+
+        <div class="logic-view" id="logic-text">
+            if (Threshold > LDR)
+        </div>
+
+        <div id="info-panel">
+            <h3>Lesson Concepts</h3>
+            <ul>
+                <li><b>Input</b>: LDR (Analog Value)</li>
+                <li><b>Logic</b>: If Threshold > Reading</li>
+                <li><b>Output</b>: Pin HIGH (LED ON)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const sunSlider = document.getElementById('sun-slider');
+        const upSlider = document.getElementById('up-slider');
+        const sunValTxt = document.getElementById('sun-val');
+        const upValTxt = document.getElementById('up-val');
+        const logicTxt = document.getElementById('logic-text');
+        const lampBulb = document.getElementById('lamp-bulb');
+        const statusBadge = document.getElementById('light-status');
+        const root = document.documentElement;
+
+        function updateSimulation() {
+            const ldrValue = parseInt(sunSlider.value, 10);
+            const threshold = parseInt(upSlider.value, 10);
+
+            sunValTxt.innerText = ldrValue;
+            upValTxt.innerText = threshold;
+            
+            logicTxt.innerHTML = `if (${threshold} > ${ldrValue}) {<br>&nbsp;&nbsp;Streetlight = ON;<br>}`;
+
+            const isLightNeeded = threshold > ldrValue;
+
+            if (isLightNeeded) {
+                lampBulb.classList.add('on');
+                root.style.setProperty('--ground-light-opacity', '1');
+                root.style.setProperty('--window-color', '#fde047');
+                statusBadge.innerText = 'Streetlight: ACTIVE';
+                statusBadge.style.color = 'var(--accent-color)';
+            } else {
+                lampBulb.classList.remove('on');
+                root.style.setProperty('--ground-light-opacity', '0');
+                root.style.setProperty('--window-color', '#334155');
+                statusBadge.innerText = 'Streetlight: INACTIVE';
+                statusBadge.style.color = 'white';
+            }
+
+            const ratio = ldrValue / 1023;
+            let skyColor = '#020617'; 
+            if (ratio >= 0.1 && ratio < 0.3) skyColor = '#1e1b4b'; 
+            if (ratio >= 0.3 && ratio < 0.6) skyColor = '#0369a1'; 
+            if (ratio >= 0.6) skyColor = '#38bdf8'; 
+            root.style.setProperty('--sky-color', skyColor);
+
+            const moonPos = 50 + (ratio * 100);
+            const moonOpacity = Math.max(0, 1 - (ldrValue / 400));
+            const sunPos = 120 - (ratio * 70);
+            const sunOpacity = Math.min(1, ldrValue / 200);
+
+            root.style.setProperty('--moon-left', moonPos + '%');
+            root.style.setProperty('--moon-opacity', moonOpacity);
+            root.style.setProperty('--sun-left', sunPos + '%');
+            root.style.setProperty('--sun-opacity', sunOpacity);
+        }
+
+        sunSlider.addEventListener('input', updateSimulation);
+        upSlider.addEventListener('input', updateSimulation);
+        updateSimulation();
+    </script>
+</body>
+</html>

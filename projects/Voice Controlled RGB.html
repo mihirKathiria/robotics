@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Controlled RGB Simulation</title>
+    <style>
+        /* --- RESET & BASIC SETUP --- */
+        :root {
+            --bg-dark: #121212;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --accent-blue: #4dabf7;
+            --pcb-green: #2e7d32;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at center, #1e1e24 0%, #000000 100%);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; /* Prevent scrolling on TV */
+            display: flex;
+        }
+
+        /* --- LEFT PANEL: CONTROLS (Glassmorphism) --- */
+        .control-panel {
+            width: 30%;
+            height: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .panel-title {
+            font-size: 2.5rem; /* Large for TV */
+            font-weight: 300;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--glass-border);
+            padding-bottom: 1rem;
+        }
+
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            font-size: 1.5rem; /* Large for TV */
+            border-radius: 15px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+
+        .voice-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Icon inside button */
+        .btn-icon {
+            margin-right: 15px;
+            font-size: 1.8rem;
+        }
+
+        /* --- RIGHT PANEL: SIMULATION STAGE --- */
+        .stage {
+            width: 70%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+        }
+
+        /* --- COMPONENT: LABELS --- */
+        .label {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            color: #aaa;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* --- COMPONENT 1: PERSON --- */
+        .person-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+        }
+
+        .head {
+            width: 120px;
+            height: 120px;
+            background-color: #ffccaa;
+            border-radius: 50%;
+            position: relative;
+            margin: 0 auto;
+            z-index: 2;
+        }
+
+        .eye {
+            position: absolute;
+            top: 40%;
+            width: 12px;
+            height: 12px;
+            background: #333;
+            border-radius: 50%;
+        }
+        .eye.left { left: 30px; }
+        .eye.right { right: 30px; }
+
+        .mouth {
+            position: absolute;
+            bottom: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 5px;
+            background: #333;
+            border-radius: 10px;
+            transition: height 0.1s;
+        }
+
+        /* Body hint */
+        .body-shape {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 60px;
+            background: #555;
+            border-radius: 50px 50px 0 0;
+            z-index: 1;
+        }
+
+        /* Speaking Animation Class */
+        .speaking .mouth {
+            height: 25px;
+            border-radius: 50%;
+            animation: talk 0.2s infinite alternate;
+        }
+
+        @keyframes talk {
+            0% { height: 10px; width: 40px; }
+            100% { height: 25px; width: 35px; }
+        }
+
+        /* --- COMPONENT 2: SMART PHONE --- */
+        .phone-container {
+            position: relative;
+            width: 100px;
+            height: 180px;
+            background: #111;
+            border: 4px solid #444;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .phone-screen {
+            width: 85%;
+            height: 80%;
+            background: #222;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #333;
+        }
+
+        .mic-dot {
+            width: 8px;
+            height: 8px;
+            background: #555;
+            border-radius: 50%;
+            margin-bottom: 5px;
+        }
+
+        .mic-active {
+            background: red;
+            box-shadow: 0 0 10px red;
+        }
+
+        /* --- COMPONENT 3: MICROCONTROLLER & LED --- */
+        .mcu-container {
+            position: relative;
+            width: 200px;
+            height: 140px;
+            background: var(--pcb-green);
+            border-radius: 5px;
+            border: 2px solid #1b5e20;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chip {
+            width: 80px;
+            height: 80px;
+            background: #111;
+            border: 1px solid #333;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2px;
+            padding: 5px;
+        }
+
+        .chip-leg {
+            background: #555;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* THE LED */
+        .led-bulb {
+            position: absolute;
+            top: -60px; /* Sitting on top */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background-color: #333; /* Off state */
+            border-radius: 50% 50% 5px 5px;
+            border: 2px solid #555;
+            transition: background-color 0.5s, box-shadow 0.5s;
+            z-index: 5;
+        }
+
+        /* Wires */
+        .wire {
+            position: absolute;
+            bottom: -20px;
+            width: 4px;
+            height: 25px;
+            background: silver;
+        }
+        .wire.w-left { left: 30px; }
+        .wire.w-right { right: 30px; }
+
+        /* --- ANIMATIONS: WAVES --- */
+        
+        /* Sound Wave (Mouth -> Phone) */
+        .sound-wave {
+            position: absolute;
+            left: 100px; /* Mouth position */
+            top: 50%;
+            width: 10px;
+            height: 40px;
+            border-right: 3px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes soundMove {
+            0% { opacity: 1; transform: translateX(0) scaleY(0.5); }
+            100% { opacity: 0; transform: translateX(150px) scaleY(2); } 
+            /* 150px is approx distance to phone */
+        }
+
+        /* Wifi Signal (Phone -> MCU) */
+        .wifi-wave {
+            position: absolute;
+            left: 50px; /* Center of phone */
+            top: 50%;
+            width: 20px;
+            height: 20px;
+            border: 3px solid transparent;
+            border-right-color: var(--accent-blue);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-50%) rotate(-45deg); /* Arc shape facing right */
+        }
+
+        @keyframes signalMove {
+            0% { opacity: 1; left: 100%; width: 10px; height: 10px; border-width: 5px;}
+            100% { opacity: 0; left: 300%; width: 100px; height: 100px; border-width: 1px;}
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- LEFT: GLASS CONTROL PANEL -->
+    <div class="control-panel">
+        <div class="panel-title">Voice Command Center</div>
+
+        <button class="voice-btn" onclick="triggerSimulation('#ff0000', 'Red Light')">
+            <span class="btn-icon">🔴</span> "Turn on Red Light"
+        </button>
+
+        <button class="voice-btn" onclick="triggerSimulation('#ff8800', 'Orange Light')">
+            <span class="btn-icon">🟠</span> "Turn on Orange Light"
+        </button>
+
+        <button class="voice-btn" onclick="triggerSimulation('#00ff00', 'Green Light')">
+            <span class="btn-icon">🟢</span> "Turn on Green Light"
+        </button>
+
+        <button class="voice-btn" onclick="triggerSimulation('#0088ff', 'Blue Light')">
+            <span class="btn-icon">🔵</span> "Turn on Blue Light"
+        </button>
+
+        <button class="voice-btn" onclick="triggerSimulation('#111111', 'OFF', true)">
+            <span class="btn-icon">⚫</span> "Turn off Light"
+        </button>
+    </div>
+
+    <!-- RIGHT: SIMULATION STAGE -->
+    <div class="stage" id="stage">
+
+        <!-- 1. PERSON -->
+        <div class="person-container" id="person">
+            <div class="head">
+                <div class="eye left"></div>
+                <div class="eye right"></div>
+                <div class="mouth" id="mouth"></div>
+            </div>
+            <div class="body-shape"></div>
+            <div class="label">Person (User)</div>
+        </div>
+
+        <!-- 2. SMART PHONE -->
+        <div class="phone-container">
+            <div class="mic-dot" id="mic-led"></div>
+            <div class="phone-screen">
+                <span id="phone-icon">🎙️</span>
+            </div>
+            <div class="label">Smart Phone</div>
+        </div>
+
+        <!-- 3. MICROCONTROLLER + LIGHT -->
+        <div class="mcu-container">
+            <!-- The RGB Light Bulb -->
+            <div class="led-bulb" id="rgb-light">
+                <div class="wire w-left"></div>
+                <div class="wire w-right"></div>
+            </div>
+            
+            <!-- PCB Board Design -->
+            <div class="chip">
+                <div class="chip-leg"></div><div class="chip-leg"></div>
+                <div class="chip-leg"></div><div class="chip-leg"></div>
+            </div>
+            <div class="label">Microcontroller</div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM Elements
+        const person = document.getElementById('person');
+        const mouth = document.getElementById('mouth');
+        const micLed = document.getElementById('mic-led');
+        const phoneIcon = document.getElementById('phone-icon');
+        const rgbLight = document.getElementById('rgb-light');
+        const stage = document.getElementById('stage');
+
+        let isAnimating = false;
+
+        /**
+         * Main function to handle the simulation flow
+         * 1. Voice (Person -> Phone)
+         * 2. Processing (Phone)
+         * 3. Signal (Phone -> MCU)
+         * 4. Output (Light)
+         */
+        async function triggerSimulation(colorCode, colorName, isOff = false) {
+            if (isAnimating) return; // Prevent clicking while animation runs
+            isAnimating = true;
+
+            // --- STEP 1: VOICE COMMAND (0ms - 1000ms) ---
+            
+            // Animate Mouth
+            person.classList.add('speaking');
+            
+            // Create Sound Waves
+            let waveInterval = setInterval(() => {
+                createSoundWave();
+            }, 200);
+
+            // Wait for speaking to finish (1 second)
+            await delay(1000);
+            
+            clearInterval(waveInterval);
+            person.classList.remove('speaking');
+
+
+            // --- STEP 2: PHONE PROCESSING (1000ms - 1500ms) ---
+            
+            micLed.classList.add('mic-active');
+            phoneIcon.style.opacity = '0.5'; // flicker effect
+            await delay(200);
+            phoneIcon.style.opacity = '1';
+            await delay(300);
+
+
+            // --- STEP 3: SIGNAL TRANSMISSION (1500ms - 2500ms) ---
+            
+            // Create WiFi Signals
+            let signalInterval = setInterval(() => {
+                createSignalWave();
+            }, 300);
+
+            await delay(1000); // Wait for signal to travel
+            
+            clearInterval(signalInterval);
+            micLed.classList.remove('mic-active');
+
+
+            // --- STEP 4: OUTPUT (LIGHT ON) ---
+            
+            if (isOff) {
+                // Turn Off Logic
+                rgbLight.style.backgroundColor = '#333';
+                rgbLight.style.boxShadow = 'none';
+            } else {
+                // Turn On Logic
+                rgbLight.style.backgroundColor = colorCode;
+                // Add a glowing effect
+                rgbLight.style.boxShadow = `0 0 30px 10px ${colorCode}, inset 0 0 20px rgba(255,255,255,0.5)`;
+            }
+
+            isAnimating = false;
+        }
+
+        // Helper to pause execution
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Visual Generator: Sound Waves
+        function createSoundWave() {
+            const wave = document.createElement('div');
+            wave.classList.add('sound-wave');
+            
+            // Append to person container so position is relative to person
+            person.appendChild(wave);
+
+            // Trigger CSS animation
+            wave.style.animation = 'soundMove 1s linear forwards';
+
+            // Clean up DOM
+            setTimeout(() => {
+                wave.remove();
+            }, 1000);
+        }
+
+        // Visual Generator: Signal Waves
+        function createSignalWave() {
+            const phone = document.querySelector('.phone-container');
+            const wave = document.createElement('div');
+            wave.classList.add('wifi-wave');
+            
+            phone.appendChild(wave);
+
+            // Trigger CSS animation
+            wave.style.animation = 'signalMove 1s linear forwards';
+
+            // Clean up DOM
+            setTimeout(() => {
+                wave.remove();
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

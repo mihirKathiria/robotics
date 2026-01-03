@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Mixer - Traditional JS/CSS</title>
+    <style>
+        /* Traditional CSS Variables for easy maintenance */
+        :root {
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --txt-main: #0f172a;
+            --txt-muted: #64748b;
+            --border: #e2e8f0;
+            --track: #e2e8f0;
+            --r-color: #ef4444;
+            --g-color: #10b981;
+            --b-color: #3b82f6;
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-page: #0f172a;
+                --bg-card: #1e293b;
+                --txt-main: #f1f5f9;
+                --txt-muted: #94a3b8;
+                --border: #334155;
+                --track: #334155;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--txt-main);
+            font-family: sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Layout */
+        .preview-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.1s ease;
+        }
+
+        .preview-label {
+            background: rgba(0, 0, 0, 0.15);
+            padding: 20px 30px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            pointer-events: none;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .controls-area {
+            flex: 1.5;
+            background: var(--bg-card);
+            padding: 40px 20px;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .content-wrap {
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: var(--txt-muted);
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        /* Sliders */
+        .slider-group {
+            margin-bottom: 30px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 8px;
+            background: var(--track);
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid currentColor;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .red-text { color: var(--r-color); }
+        .green-text { color: var(--g-color); }
+        .blue-text { color: var(--b-color); }
+
+        /* Final Display Box */
+        .css-box {
+            margin-top: 40px;
+            background: var(--bg-page);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .css-box-label {
+            font-size: 10px;
+            color: var(--txt-muted);
+            text-transform: uppercase;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .css-value {
+            font-family: monospace;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Preset Sections */
+        .preset-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .preset-title {
+            font-size: 11px;
+            color: var(--txt-muted);
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: block;
+            letter-spacing: 1.5px;
+        }
+
+        .preset-grid {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .color-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Desktop Layout */
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            .preview-area { flex: 1; }
+            .controls-area { 
+                flex: 1; 
+                display: flex;
+                align-items: center;
+            }
+            .preview-label { font-size: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="preview" class="preview-area">
+        <div id="label" class="preview-label">rgb(63, 94, 251)</div>
+    </div>
+
+    <div class="controls-area">
+        <div class="content-wrap">
+            <h1>Color Mixer</h1>
+            <p>Move the sliders below to adjust the RGB values.</p>
+
+            <!-- Red -->
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="red-text">Red</span>
+                    <span id="r-num">63</span>
+                </div>
+                <input type="range" id="r-in" min="0" max="255" value="63" style="color: var(--r-color)">
+            </div>
+
+            <!-- Green -->
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="green-text">Green</span>
+                    <span id="g-num">94</span>
+                </div>
+                <input type="range" id="g-in" min="0" max="255" value="94" style="color: var(--g-color)">
+            </div>
+
+            <!-- Blue -->
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="blue-text">Blue</span>
+                    <span id="b-num">251</span>
+                </div>
+                <input type="range" id="b-in" min="0" max="255" value="251" style="color: var(--b-color)">
+            </div>
+
+            <div class="css-box">
+                <span class="css-box-label">Result</span>
+                <div id="result" class="css-value">rgb(63, 94, 251)</div>
+            </div>
+
+            <!-- Rainbow Preset Buttons -->
+            <div class="preset-section">
+                <span class="preset-title">Rainbow Presets</span>
+                <div class="preset-grid">
+                    <button class="color-btn" style="background: #ff0000;" onclick="setPreset(255, 0, 0, 'Red')" title="Red"></button>
+                    <button class="color-btn" style="background: #ff7f00;" onclick="setPreset(255, 127, 0, 'Orange')" title="Orange"></button>
+                    <button class="color-btn" style="background: #ffff00;" onclick="setPreset(255, 255, 0, 'Yellow')" title="Yellow"></button>
+                    <button class="color-btn" style="background: #00ff00;" onclick="setPreset(0, 255, 0, 'Green')" title="Green"></button>
+                    <button class="color-btn" style="background: #0000ff;" onclick="setPreset(0, 0, 255, 'Blue')" title="Blue"></button>
+                    <button class="color-btn" style="background: #4b0082;" onclick="setPreset(75, 0, 130, 'Indigo')" title="Indigo"></button>
+                    <button class="color-btn" style="background: #9400d3;" onclick="setPreset(148, 0, 211, 'Violet')" title="Violet"></button>
+                </div>
+            </div>
+
+            <!-- Aesthetic Preset Buttons -->
+            <div class="preset-section" style="margin-bottom: 40px;">
+                <span class="preset-title">Aesthetic Tones</span>
+                <div class="preset-grid">
+                    <button class="color-btn" style="background: #B4C6A6;" onclick="setPreset(180, 198, 166, 'Sage')" title="Sage"></button>
+                    <button class="color-btn" style="background: #F39189;" onclick="setPreset(243, 145, 137, 'Dusty Rose')" title="Dusty Rose"></button>
+                    <button class="color-btn" style="background: #BB8082;" onclick="setPreset(187, 128, 130, 'Muted Mauve')" title="Muted Mauve"></button>
+                    <button class="color-btn" style="background: #FFD4B2;" onclick="setPreset(255, 212, 178, 'Peach')" title="Peach"></button>
+                    <button class="color-btn" style="background: #2D4263;" onclick="setPreset(45, 66, 99, 'Navy')" title="Navy"></button>
+                    <button class="color-btn" style="background: #C84B31;" onclick="setPreset(200, 75, 49, 'Terracotta')" title="Terracotta"></button>
+                    <button class="color-btn" style="background: #6D8299;" onclick="setPreset(109, 130, 153, 'Steel Blue')" title="Steel Blue"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Get elements the traditional way
+        var rIn = document.getElementById('r-in');
+        var gIn = document.getElementById('g-in');
+        var bIn = document.getElementById('b-in');
+        
+        var rNum = document.getElementById('r-num');
+        var gNum = document.getElementById('g-num');
+        var bNum = document.getElementById('b-num');
+        
+        var preview = document.getElementById('preview');
+        var label = document.getElementById('label');
+        var result = document.getElementById('result');
+
+        function refresh() {
+            var r = rIn.value;
+            var g = gIn.value;
+            var b = bIn.value;
+
+            // Update numbers
+            rNum.innerHTML = r;
+            gNum.innerHTML = g;
+            bNum.innerHTML = b;
+
+            var color = 'rgb(' + r + ', ' + g + ', ' + b + ')';
+
+            // Apply styles
+            preview.style.backgroundColor = color;
+            label.innerHTML = color;
+            result.innerHTML = color;
+
+            // Simple contrast logic: if bright, use black text; if dark, use white text
+            var brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            if (brightness >= 128) {
+                label.style.color = '#000000';
+            } else {
+                label.style.color = '#ffffff';
+            }
+        }
+
+        // Function to set preset colors with a name
+        function setPreset(r, g, b, name) {
+            rIn.value = r;
+            gIn.value = g;
+            bIn.value = b;
+			
+			var color = 'rgb(' + r + ', ' + g + ', ' + b + ')';
+            
+            // First refresh to update backgrounds/contrast
+            refresh();
+            
+            // Then override labels with the color name
+            label.innerHTML = name;
+            result.innerHTML = color;
+        }
+
+        // Attach event listeners for the 'input' event
+        rIn.oninput = refresh;
+        gIn.oninput = refresh;
+        bIn.oninput = refresh;
+
+        // Run once on load
+        window.onload = refresh;
+    </script>
+</body>
+</html>

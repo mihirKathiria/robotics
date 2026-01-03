@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Project Dashboard</title>
+    <style>
+        /* --- RESET & LAYOUT --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-color: #050510; /* Deep Space Black */
+            /* Radial gradient for deep space lighting */
+            background-image: radial-gradient(circle at 70% 50%, #1a1a2e 0%, #000000 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Align menu to the left slightly */
+            padding-left: 10%; /* Offset for menu */
+            position: relative;
+        }
+
+        /* --- STARS (Generated via JS, Styled here) --- */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: twinkle var(--duration) infinite ease-in-out;
+            z-index: 0;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* --- THE EARTH --- */
+        .earth-container {
+            position: absolute;
+            right: -100px; /* Partially off-screen for dramatic effect */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 80vh;
+            height: 80vh;
+            z-index: 1;
+            border-radius: 50%;
+            box-shadow: -20px 0 50px rgba(0, 100, 255, 0.3), inset 20px 0 80px rgba(0,0,0,0.8);
+            background: #1c4e80;
+            overflow: hidden;
+        }
+
+        /* Texture layer for the earth (Simulated continents via CSS gradients) */
+        .earth-texture {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%; /* Double width for scrolling loop */
+            height: 100%;
+            background: 
+                /* Clouds/Land patterns using gradients */
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 20%),
+                radial-gradient(circle at 20% 30%, rgba(46, 204, 113, 0.6) 0%, transparent 25%),
+                radial-gradient(circle at 80% 70%, rgba(46, 204, 113, 0.5) 0%, transparent 30%),
+                linear-gradient(90deg, #0f2027 0%, #203a43 50%, #0f2027 100%); 
+            background-size: 50% 100%; /* Make patterns repeat */
+            opacity: 0.8;
+            animation: rotateEarth 60s linear infinite;
+        }
+
+        /* Atmosphere glow */
+        .atmosphere {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: inset 10px 0 50px rgba(0, 150, 255, 0.6);
+            z-index: 2;
+        }
+
+        @keyframes rotateEarth {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* --- GLASS MENU PANEL --- */
+        .menu-panel {
+            position: relative;
+            z-index: 10;
+            width: 400px;
+            background: rgba(255, 255, 255, 0.05); /* Very transparent */
+            backdrop-filter: blur(15px); /* Strong blur */
+            -webkit-backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            margin: 0 0 30px 0;
+            font-weight: 300;
+            letter-spacing: 4px;
+            color: white;
+            font-size: 2rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 15px;
+        }
+
+        /* --- LIST STYLES --- */
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            margin-bottom: 15px;
+        }
+
+        a {
+            display: block;
+            text-decoration: none;
+            color: rgba(255,255,255,0.7);
+            font-size: 1.2rem;
+            padding: 15px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 3px solid transparent;
+        }
+
+        /* Hover Effect */
+        a:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            border-left: 3px solid #00f2fe;
+            padding-left: 25px; /* Slight slide right */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Active/Focus state visual */
+        a:active {
+            transform: scale(0.98);
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            body {
+                padding-left: 0;
+                justify-content: center;
+            }
+            .earth-container {
+                right: -50%;
+                width: 100vw;
+                height: 100vw;
+            }
+            .menu-panel {
+                width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Stars Container -->
+    <div id="stars"></div>
+
+    <!-- Rotating Earth -->
+    <div class="earth-container">
+        <div class="earth-texture"></div>
+        <div class="atmosphere"></div>
+    </div>
+
+    <!-- Glass Menu -->
+    <nav class="menu-panel">
+        <h1>IoT Controls</h1>
+        <ul>
+            <li><a href="projects/LDR.html">Automatic Streetlight</a></li>
+            <li><a href="projects/Color picker.html">Color Picker</a></li>
+            <li><a href="projects/Ultrasonic.html">Smart Goggles</a></li>
+            <li><a href="projects/Smart Tap.html">Smart Tap</a></li>
+            <li><a href="projects/Voice Controlled RGB.html">Voice Controlled RGB</a></li>
+        </ul>
+    </nav>
+
+    <script>
+        // --- STAR GENERATOR ---
+        const starContainer = document.getElementById('stars');
+        const starCount = 150; // Number of stars
+
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            
+            // Random Position
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            
+            // Random Size
+            const size = Math.random() * 3;
+            
+            // Random Twinkle Duration
+            const duration = 2 + Math.random() * 5;
+
+            star.style.left = `${x}%`;
+            star.style.top = `${y}%`;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.setProperty('--duration', `${duration}s`);
+            
+            starContainer.appendChild(star);
+        }
+    </script>
+
+</body>
+</html>
